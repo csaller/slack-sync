@@ -7,8 +7,9 @@ export interface StatusTemplate {
 }
 
 export interface WorkingHours {
-  start: string; // "HH:MM"
-  end: string;   // "HH:MM"
+  start: string;  // "HH:MM"
+  end: string;    // "HH:MM"
+  days: number[]; // 0=Sun, 1=Mon … 6=Sat; defaults to Mon–Fri
 }
 
 export interface Config {
@@ -54,7 +55,7 @@ const DEFAULTS: Config = {
     check_interval_seconds: 60,
     calendar_refresh_interval_minutes: 5,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    working_hours: { start: "09:00", end: "18:00" },
+    working_hours: { start: "09:00", end: "18:00", days: [1, 2, 3, 4, 5] },
   },
   status: {
     show_event_title: false,

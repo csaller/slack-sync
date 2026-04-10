@@ -4,7 +4,7 @@ import type { StatusResult } from "../status/resolver";
 import { GoogleCalendarClient } from "../calendar/client";
 import { SlackClient } from "../slack/client";
 import { StateStore } from "../state/store";
-import { resolveStatus } from "../status/resolver";
+import { resolveStatus, nextWorkBoundary } from "../status/resolver";
 
 export class Scheduler {
   private eventCache: CalendarEvent[] = [];
@@ -93,7 +93,9 @@ export class Scheduler {
           ? `"${newStatus.sourceEvent.title}"`
           : newStatus.eventType;
         console.log(`[scheduler] Setting status: ${newStatus.emoji} ${newStatus.text} (${label})`);
-        await this.slackClient.setStatus(newStatus.emoji, newStatus.text, newStatus.sourceEvent?.end);
+        const expiration = newStatus.sourceEvent?.end
+          ?? nextWorkBoundary(now, this.config.schedule.working_hours, this.config.schedule.timezone);
+        await this.slackClient.setStatus(newStatus.emoji, newStatus.text, expiration);
       } else {
         console.log("[scheduler] Clearing status (free)");
         await this.slackClient.clearStatus();

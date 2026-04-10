@@ -1,5 +1,5 @@
 import type { CalendarEvent } from "../calendar/types";
-import type { Config, StatusTemplate } from "../config";
+import type { Config, StatusTemplate, WorkingHours } from "../config";
 
 export interface StatusResult {
   emoji: string;
@@ -8,22 +8,75 @@ export interface StatusResult {
   sourceEvent?: CalendarEvent;
 }
 
-function isOutsideWorkingHours(now: Date, start: string, end: string, timezone: string): boolean {
+function getMinutesOfDay(date: Date, timezone: string): number {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: timezone,
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  }).formatToParts(now);
-
+  }).formatToParts(date);
   const hour = Number(parts.find((p) => p.type === "hour")?.value ?? 0);
   const minute = Number(parts.find((p) => p.type === "minute")?.value ?? 0);
-  const nowMins = hour * 60 + minute;
+  return hour * 60 + minute;
+}
 
-  const [sh, sm] = start.split(":").map(Number);
-  const [eh, em] = end.split(":").map(Number);
+function getDayOfWeek(date: Date, timezone: string): number {
+  // Returns 0 (Sun) … 6 (Sat)
+  const name = new Intl.DateTimeFormat("en-US", { timeZone: timezone, weekday: "short" }).format(date);
+  return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(name);
+}
 
+// Returns a Date representing the given hour:minute on the same calendar day
+// as `reference`, expressed in `timezone`, converted to UTC.
+function dateAtTime(reference: Date, hour: number, minute: number, timezone: string): Date {
+  const localDate = new Intl.DateTimeFormat("sv-SE", { timeZone: timezone }).format(reference);
+  const hh = String(hour).padStart(2, "0");
+  const mm = String(minute).padStart(2, "0");
+  // Treat the target local time as UTC to get a probe, then correct for the offset.
+  const probe = new Date(`${localDate}T${hh}:${mm}:00Z`);
+  const probeParts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(probe);
+  const probeHour = Number(probeParts.find((p) => p.type === "hour")?.value ?? 0);
+  const probeMins = Number(probeParts.find((p) => p.type === "minute")?.value ?? 0);
+  const diffMs = ((probeHour * 60 + probeMins) - (hour * 60 + minute)) * 60_000;
+  return new Date(probe.getTime() - diffMs);
+}
+
+function isOutsideWorkingHours(now: Date, wh: WorkingHours, timezone: string): boolean {
+  if (!wh.days.includes(getDayOfWeek(now, timezone))) return true;
+  const nowMins = getMinutesOfDay(now, timezone);
+  const [sh, sm] = wh.start.split(":").map(Number);
+  const [eh, em] = wh.end.split(":").map(Number);
   return nowMins < sh * 60 + sm || nowMins >= eh * 60 + em;
+}
+
+// Returns the Date when the current working period ends (if inside hours) or
+// when the next working period begins (if outside hours / on a non-work day).
+// Use this as the Slack status expiration so statuses auto-expire even if the
+// scheduler goes down.
+export function nextWorkBoundary(now: Date, wh: WorkingHours, timezone: string): Date {
+  const [sh, sm] = wh.start.split(":").map(Number);
+  const [eh, em] = wh.end.split(":").map(Number);
+
+  if (!isOutsideWorkingHours(now, wh, timezone)) {
+    // Currently inside working hours → expire at end of today's shift
+    return dateAtTime(now, eh, em, timezone);
+  }
+
+  // Outside hours → find the next workday and return its start time
+  for (let daysAhead = 1; daysAhead <= 7; daysAhead++) {
+    const candidate = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+    if (wh.days.includes(getDayOfWeek(candidate, timezone))) {
+      return dateAtTime(candidate, sh, sm, timezone);
+    }
+  }
+
+  // Fallback — should never be reached with a valid config
+  return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 }
 
 function buildText(template: StatusTemplate, event: CalendarEvent | undefined, showTitle: boolean): string {
@@ -115,7 +168,7 @@ export function resolveStatus(
   }
 
   // 5. Outside working hours
-  if (isOutsideWorkingHours(now, config.schedule.working_hours.start, config.schedule.working_hours.end, config.schedule.timezone)) {
+  if (isOutsideWorkingHours(now, config.schedule.working_hours, config.schedule.timezone)) {
     return {
       emoji: templates.outside_hours.emoji,
       text: templates.outside_hours.text,
