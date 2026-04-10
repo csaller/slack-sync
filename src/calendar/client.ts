@@ -98,7 +98,8 @@ export class GoogleCalendarClient {
             ? (selfAttendee.responseStatus as RsvpStatus) ?? "needsAction"
             : "accepted" // organizer or sole attendee
 
-          // Determine event type: Google native types first, then pattern matching
+          // Determine event type. "lunch" is synthetic (no Google native type), so check
+          // it first — it can override any native type (e.g. an outOfOffice used for lunch).
           let eventType: EventType = "meeting"
           if (lunchPatterns.some((p) => title.toLowerCase().includes(p.toLowerCase()))) {
             eventType = "lunch"
