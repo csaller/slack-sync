@@ -1,0 +1,8 @@
+node_modules/
+dist/
+data/
+*.local
+.env
+
+config.yaml
+!config.example.yaml

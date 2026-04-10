@@ -1,0 +1,10 @@
+services:
+  slack-sync:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - .data:/app/.data
+      - ./config.yaml:/app/config.yaml:ro
+    environment:
+      - NODE_ENV=production
+    # Uncomment to see logs: docker compose logs -f

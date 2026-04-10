@@ -1,0 +1,71 @@
+slack:
+  # Your Slack web client token — found in browser network tab (xoxc-...)
+  xoxc_token: "xoxc-REPLACE-ME"
+  # Your Slack session cookie value — the value of the "d" cookie (xoxd-...)
+  xoxd_token: "xoxd-REPLACE-ME"
+
+google:
+  # Path to the OAuth credentials JSON downloaded from Google Cloud Console
+  credentials_file: ".data/credentials.json"
+  # Path where the OAuth token will be stored after running --setup
+  token_file: ".data/token.json"
+  # List of calendar IDs to watch. "primary" is your main calendar.
+  calendar_ids:
+    - "primary"
+    # - "your-other-calendar@gmail.com"
+
+schedule:
+  # How often to check if the status needs updating (seconds)
+  check_interval_seconds: 60
+  # How often to re-fetch events from Google Calendar (minutes)
+  calendar_refresh_interval_minutes: 5
+  # IANA timezone name. Defaults to system timezone if omitted.
+  timezone: "America/Sao_Paulo"
+  working_hours:
+    start: "09:00"
+    end: "18:00"
+
+status:
+  # Set to true to use the event title as the Slack status text
+  show_event_title: false
+
+  templates:
+    meeting:
+      emoji: ":calendar:"
+      text: "In a meeting"
+    focus:
+      emoji: ":dart:"
+      text: "Focus time"
+    ooo:
+      emoji: ":palm_tree:"
+      text: "Out of office"
+    lunch:
+      emoji: ":knife_fork_plate:"
+      text: "Out for lunch"
+    outside_hours:
+      emoji: ":no_entry_sign:"
+      text: "Outside working hours"
+
+  # Event titles containing these strings (case-insensitive) are treated as OOO
+  ooo_patterns:
+    - "OOO"
+    - "Out of Office"
+    - "Vacation"
+    - "PTO"
+
+  # Event titles containing these strings (case-insensitive) are treated as Focus Time
+  focus_patterns:
+    - "Focus Time"
+    - "Deep Work"
+    - "No Meetings"
+
+  # Event titles containing these strings (case-insensitive) are treated as a lunch break
+  # Note: lunch takes priority over meetings (OOO → Focus → Lunch → Meeting)
+  lunch_patterns:
+    - "Lunch"
+    - "Almoço"
+    - "Lunch break"
+
+  # Events whose titles match these strings (case-insensitive) are completely ignored
+  skip_patterns:
+    - "Blocked"
