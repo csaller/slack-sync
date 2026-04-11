@@ -1,0 +1,136 @@
+name: PR Check
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  statuses: write
+
+jobs:
+  trigger:
+    if: github.event.issue.pull_request != null && github.event.comment.body == '/check'
+    runs-on: ubuntu-24.04
+    outputs:
+      head_sha: ${{ steps.pr.outputs.head_sha }}
+
+    steps:
+      - name: React to trigger comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket',
+            });
+
+      - name: Get PR head SHA
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            core.setOutput('head_sha', pr.head.sha);
+
+      - name: Set status pending
+        uses: actions/github-script@v7
+        env:
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: process.env.HEAD_SHA,
+              state: 'pending',
+              context: 'pr-check',
+              description: 'Running checks…',
+              target_url: `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`,
+            });
+
+  check:
+    needs: trigger
+    runs-on: ubuntu-24.04
+    if: needs.trigger.result == 'success' && needs.trigger.outputs.head_sha != ''
+    permissions:
+      contents: read
+      statuses: write
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.trigger.outputs.head_sha }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Typecheck
+        id: typecheck
+        run: bun run typecheck
+
+      - name: Test
+        id: test
+        run: bun test
+
+      - name: Update commit status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const typecheckOutcome = '${{ steps.typecheck.outcome }}';
+            const testOutcome = '${{ steps.test.outcome }}';
+            const allPassed = typecheckOutcome === 'success' && testOutcome === 'success';
+            const runUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: '${{ needs.trigger.outputs.head_sha }}',
+              state: allPassed ? 'success' : 'failure',
+              context: 'pr-check',
+              description: allPassed ? 'All checks passed' : `Failed: ${[
+                typecheckOutcome !== 'success' && 'typecheck',
+                testOutcome !== 'success' && 'tests',
+              ].filter(Boolean).join(', ')}`,
+              target_url: runUrl,
+            });
+
+      - name: Post result comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const typecheckStatus = '${{ steps.typecheck.outcome }}';
+            const testStatus = '${{ steps.test.outcome }}';
+            const runUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+
+            const icon = (s) => s === 'success' ? '✅' : s === 'skipped' ? '⏭️' : '❌';
+
+            const body = [
+              `### Check results ([run](${runUrl}))`,
+              '',
+              `| Step | Status |`,
+              `|------|--------|`,
+              `| Typecheck | ${icon(typecheckStatus)} ${typecheckStatus} |`,
+              `| Tests | ${icon(testStatus)} ${testStatus} |`,
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
