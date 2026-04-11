@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/csaller/slack-sync/compare/slack-sync-v1.1.1...slack-sync-v1.1.2) (2026-04-11)
+
+
+### Bug Fixes
+
+* **release:** extract version from tag for metadata generation ([4fa180c](https://github.com/csaller/slack-sync/commit/4fa180c2ab6b7bf274f74903af422255b4263110))
+
 ## [1.1.1](https://github.com/csaller/slack-sync/compare/slack-sync-v1.1.0...slack-sync-v1.1.1) (2026-04-11)
 
 
