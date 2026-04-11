@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/csaller/slack-sync/compare/slack-sync-v1.1.0...slack-sync-v1.1.1) (2026-04-11)
+
+
+### Bug Fixes
+
+* **actions:** add missing permission for attestations ([6a516ca](https://github.com/csaller/slack-sync/commit/6a516ca75bdfabeb9f4ace4380c22adcff89287d))
+
 ## [1.1.0](https://github.com/csaller/slack-sync/compare/slack-sync-v1.0.0...slack-sync-v1.1.0) (2026-04-11)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "slack-sync",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Sync Google Calendar events to Slack status",
   "module": "src/index.ts",
   "scripts": {
