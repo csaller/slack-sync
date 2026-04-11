@@ -10,7 +10,7 @@
     "typecheck": "bunx tsc --noEmit"
   },
   "dependencies": {
-    "googleapis": "^144.0.0",
+    "googleapis": "^171.4.0",
     "yaml": "^2.7.0"
   },
   "devDependencies": {
