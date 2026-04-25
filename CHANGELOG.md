@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0](https://github.com/csaller/slack-sync/compare/slack-sync-v1.1.2...slack-sync-v1.2.0) (2026-04-25)
+
+
+### Features
+
+* **pr-check:** add GitHub Actions workflow for PR checks and status updates ([34044ec](https://github.com/csaller/slack-sync/commit/34044ece2429b79867ecc45834202e549ba12f6c))
+
+
+### Bug Fixes
+
+* **dependencies:** update googleapis and related packages to latest versions ([f626567](https://github.com/csaller/slack-sync/commit/f626567a5a4c065e8a8b2d1e24b4cc819f0a3b11))
+
 ## [1.1.2](https://github.com/csaller/slack-sync/compare/slack-sync-v1.1.1...slack-sync-v1.1.2) (2026-04-11)
 
 
