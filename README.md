@@ -12,7 +12,7 @@ The service polls Google Calendar on a configurable interval, resolves the curre
 
 ## Prerequisites
 
-- [Bun](https://bun.sh) (for local runs) or [Docker](https://docs.docker.com/get-docker/) + [Docker Compose](https://docs.docker.com/compose/)
+- [Node.js](https://nodejs.org) and [pnpm](https://pnpm.io) (for local runs) or [Docker](https://docs.docker.com/get-docker/) + [Docker Compose](https://docs.docker.com/compose/)
 - A Google account with Google Calendar
 - A Slack workspace where you want to update your status
 
@@ -164,17 +164,17 @@ cp ~/Downloads/credentials.json .data/credentials.json
 
 Before the service can run, you must complete the OAuth flow to generate a token. This is a one-time step.
 
-### Local (Bun)
+### Local (Node.js + pnpm)
 
 ```bash
-bun install
-bun run setup
+pnpm install
+pnpm run setup
 ```
 
 ### Docker
 
 ```bash
-docker compose run --rm slack-sync bun run dist/index.js --setup --config /app/config.yaml
+docker compose run --rm slack-sync dist/index.js --setup --config /app/config.yaml
 ```
 
 The setup command will:
@@ -212,16 +212,17 @@ Stop:
 docker compose down
 ```
 
-### Local (Bun)
+### Local (Node.js + pnpm)
 
 ```bash
-bun run start
+pnpm run build
+pnpm run start
 ```
 
 With a custom config path:
 
 ```bash
-bun run src/index.ts --config /path/to/config.yaml
+node dist/index.js --config /path/to/config.yaml
 ```
 
 ---
