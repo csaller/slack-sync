@@ -1,10 +1,10 @@
 import { google } from "googleapis"
-import { OAuth2Client } from "google-auth-library"
 import { readFileSync, writeFileSync, existsSync } from "fs"
 import * as readline from "readline"
 import type { CalendarEvent, EventType, RsvpStatus } from "./types"
 
 const SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
+type OAuth2Client = InstanceType<typeof google.auth.OAuth2>
 
 interface Credentials {
   installed?: { client_id: string; client_secret: string; redirect_uris: string[] }

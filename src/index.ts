@@ -30,7 +30,6 @@ async function runSetup(): Promise<void> {
 
   if (existsSync(configPath)) {
     try {
-      const { loadConfig: lc } = await import("./config");
       // Parse partially — we only care about google paths
       const { parse } = await import("yaml");
       const { readFileSync } = await import("fs");

@@ -71,19 +71,26 @@ jobs:
         with:
           ref: ${{ needs.trigger.outputs.head_sha }}
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.10.0
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
 
       - name: Install dependencies
-        run: bun install
+        run: pnpm install --frozen-lockfile
 
       - name: Typecheck
         id: typecheck
-        run: bun run typecheck
+        run: pnpm run typecheck
 
       - name: Test
         id: test
-        run: bun test
+        run: pnpm test
 
       - name: Update commit status
         if: always()
